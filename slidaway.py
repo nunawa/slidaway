@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 
 def switch():
-    parser = argparse.ArgumentParser(description="Slidaway: Extract and save presentation slides from Microsoft Stream or Zoom Cloud Meeting videos")
+    parser = argparse.ArgumentParser(description="Slidaway: CLI tool to extract and save presentation slides from Microsoft Stream and Zoom videos")
     
     parser.add_argument("--version", action="version", version="version 0.1.0", help="Show version.")
     parser.add_argument("-i", "--interval", type=int, help="Sampling interval when extracting an image. (in seconds, default: 3)")
@@ -22,9 +22,9 @@ def switch():
     #parser.add_argument("--noclean", action="store_true", help="If there are already images in the destination, they will not be deleted.")
     
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-u", "--url", metavar="URL", nargs="+", help="Default mode. Download the video and extract the presentation slides. Enclose the URL in quotation marks. (like \"http://example.com/\")")
+    group.add_argument("-u", "--url", metavar="URL", nargs="+", help="Default mode. Download the video and extract the presentation slides. Specify the target URL.")
     group.add_argument("-d", "--download", metavar="URL", nargs="+", help="Download only mode.")
-    group.add_argument("-x", "--extract", action="store_true", help="Extract only mode.")
+    group.add_argument("-x", "--extract", metavar="PATH", nargs="+", help="Extract only mode. Specify the path to the target video file.")
     
     args = parser.parse_args()
 
@@ -33,7 +33,7 @@ def switch():
         downloadVideo(args.download)
     elif args.extract:
         print("\nMode: Extract")
-        frameToImage(args.interval, args.threshold)
+        frameToImage(args.interval, args.threshold, args.extract)
     else:
         print("\nMode: Default")
         prev_list = findVideoFile()
@@ -101,7 +101,7 @@ def downloadFromZoom(url_list):
         while os.path.exists(path):
             path = "..\\videos\\{}_{}.mp4".format(filename, uniq)
             uniq += 1
-        print("\nファイル名: " + path.replace("..\\videos\\", ""))
+        print("\nFile name: " + path.replace("..\\videos\\", ""))
 
         # ファイルサイズ取得のためヘッダだけリクエスト
         mp4_size = int(requests.head(mp4_url, cookies=cookie, headers={"referer": url}).headers["Content-Length"])
@@ -126,7 +126,7 @@ def findVideoFile():
                             if re.search(".(mp4|mkv)", str(p))])
     return video_list
 
-def frameToImage(interval, threshold, video_list = None):
+def frameToImage(interval, threshold, video_list):
     if not interval:
         interval = 3
 
@@ -136,44 +136,10 @@ def frameToImage(interval, threshold, video_list = None):
     path_video_list = []
     filename_list = []
 
-    if video_list:
-        for p in video_list:
-            # パスとファイル名をそれぞれリストに追加
-            path_video_list.append(str(p))
-            filename_list.append(str(p.name))
-    else:
-        # mp4またはmkvファイルを検索
-        video_list = findVideoFile()
-
-        # ファイルがない場合終了
-        if not video_list:
-            print("\nFile not found")
-            sys.exit(1)
-
-        print("\nSelect files\n（Multiple entries allowed, Press Enter twice to finish typing）")
-        # ファイル一覧表示
-        key = 0
-        for p in video_list:
-            print(str(key) + ": " + p.name)
-            key += 1
-
-        while True:
-            try:
-                select_raw = input(">>")
-                if select_raw == "":
-                    break
-                select = int(select_raw)
-                # 選択されたファイルのパス・ファイル名をリストに追加
-                path_video_list.append(str(video_list[select]))
-                filename_list.append(str(video_list[select].name))
-            except ValueError:
-                print("Please enter an integer")
-            except IndexError:
-                print("The value you entered is incorrect")
-
-        if not path_video_list:
-            print("No file selected")
-            sys.exit()
+    for p in video_list:
+        # パスとファイル名をそれぞれリストに追加
+        path_video_list.append(str(p))
+        filename_list.append(os.path.basename(p))
 
     print("\nStart extracting the slides")
 

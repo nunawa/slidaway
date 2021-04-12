@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 
 def switch():
-    parser = argparse.ArgumentParser(description="Slidaway: Microsoft StreamとZoom Cloud Meetingのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール")
+    parser = argparse.ArgumentParser(description="Slidaway: Microsoft StreamとZoomのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール")
     
     parser.add_argument("--version", action="version", version="version 0.1.0", help="バージョンを表示します。")
     parser.add_argument("-i", "--interval", type=int, help="スライドを抽出する際のサンプリング間隔を指定します。(単位: 秒, デフォルト: 3)")
@@ -22,9 +22,9 @@ def switch():
     #parser.add_argument("--noclean", action="store_true", help="保存先に既に画像がある場合、それらを削除しないようにします。")
     
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-u", "--url", metavar="URL", nargs="+", help="デフォルトのモードです。動画をダウンロードし、プレゼンのスライドを抽出します。URLは引用符で囲ってください。(例: \"http://example.com/\")")
+    group.add_argument("-u", "--url", metavar="URL", nargs="+", help="デフォルトのモードです。動画をダウンロードし、プレゼンのスライドを抽出します。対象となるURLを指定してください。")
     group.add_argument("-d", "--download", metavar="URL", nargs="+", help="ダウンロードのみのモードです。")
-    group.add_argument("-x", "--extract", action="store_true", help="スライド抽出のみのモードです。")
+    group.add_argument("-x", "--extract", metavar="PATH", nargs="+", help="スライド抽出のみのモードです。対象となる動画ファイルのパスを指定してください。")
     
     args = parser.parse_args()
 
@@ -33,7 +33,7 @@ def switch():
         downloadVideo(args.download)
     elif args.extract:
         print("\nモード: スライド抽出")
-        frameToImage(args.interval, args.threshold)
+        frameToImage(args.interval, args.threshold, args.extract)
     else:
         print("\nモード: デフォルト")
         prev_list = findVideoFile()
@@ -126,7 +126,7 @@ def findVideoFile():
                             if re.search(".(mp4|mkv)", str(p))])
     return video_list
 
-def frameToImage(interval, threshold, video_list = None):
+def frameToImage(interval, threshold, video_list):
     if not interval:
         interval = 3
 
@@ -136,44 +136,10 @@ def frameToImage(interval, threshold, video_list = None):
     path_video_list = []
     filename_list = []
 
-    if video_list:
-        for p in video_list:
-            # パスとファイル名をそれぞれリストに追加
-            path_video_list.append(str(p))
-            filename_list.append(str(p.name))
-    else:
-        # mp4またはmkvファイルを検索
-        video_list = findVideoFile()
-
-        # ファイルがない場合終了
-        if not video_list:
-            print("\nファイルがありません")
-            sys.exit(1)
-
-        print("\nファイルを選択\n（複数入力可、Enterキーを2回押して入力終了）")
-        # ファイル一覧表示
-        key = 0
-        for p in video_list:
-            print(str(key) + ": " + p.name)
-            key += 1
-
-        while True:
-            try:
-                select_raw = input(">>")
-                if select_raw == "":
-                    break
-                select = int(select_raw)
-                # 選択されたファイルのパス・ファイル名をリストに追加
-                path_video_list.append(str(video_list[select]))
-                filename_list.append(str(video_list[select].name))
-            except ValueError:
-                print("整数を入力してください")
-            except IndexError:
-                print("入力された数値が間違っています")
-
-        if not path_video_list:
-            print("ファイルが選択されませんでした")
-            sys.exit()
+    for p in video_list:
+        # パスとファイル名をそれぞれリストに追加
+        path_video_list.append(str(p))
+        filename_list.append(os.path.basename(p))
 
     print("\nスライドの抽出を開始します")
 
