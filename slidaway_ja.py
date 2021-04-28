@@ -43,6 +43,7 @@ def switch():
         diff_list = set(list) - set(prev_list)
         frame_to_image(diff_list, args.savedir, args.interval, args.threshold)
 
+
 def download_video(url_list, save_dir):
     stream_url_list = []
     zoom_url_list = []
@@ -65,6 +66,7 @@ def download_video(url_list, save_dir):
         download_from_stream(stream_url_list, save_dir)
         download_from_zoom(zoom_url_list, save_dir)
 
+
 def download_from_stream(url_list, save_dir):
     print("\nStreamからのダウンロードを開始します\n")
 
@@ -80,12 +82,13 @@ def download_from_stream(url_list, save_dir):
         print("ダウンロードに失敗しました")
         sys.exit(1)
 
+
 def download_from_zoom(url_list, save_dir):
     print("\nZoomからのダウンロードを開始します")
 
     for url in url_list:
         # 動画保存ディレクトリの作成
-        #os.makedirs("..\\videos", exist_ok=True)
+        os.makedirs(save_dir, exist_ok=True)
 
         # HTTPリクエストしてmp4のURLとCookieを取得
         r = requests.get(url)
@@ -120,12 +123,6 @@ def download_from_zoom(url_list, save_dir):
 
         print("ダウンロード完了")
 
-def find_video_file(save_dir):
-    # 保存先フォルダにmp4かmkvファイルがあるか探す
-    video_list = pathlib.Path(save_dir)
-    video_list = list([p for p in video_list.glob("**/*")
-                            if re.search(".(mp4|mkv)", str(p))])
-    return video_list
 
 def frame_to_image(video_list, save_dir, interval, threshold):
     path_video_list = []
@@ -176,14 +173,17 @@ def frame_to_image(video_list, save_dir, interval, threshold):
         for i in tqdm(range(1, int(frame_count), int(step))):
             # 現在位置をi番目のフレームに移動
             cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+
             # 動画終了検知
             if cap is None:
                 print("cap is \'NoneType\'")
                 break
+
             ret, frame = cap.read()
             # フレームが読み込めなかった時は飛ばす
             if ret == False:
                 continue
+
             frame_pil = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_pil = Image.fromarray(frame_pil)
             frame_hash = imagehash.phash(frame_pil)
@@ -201,6 +201,14 @@ def frame_to_image(video_list, save_dir, interval, threshold):
         cap.release()
         #フルパス表示にする
         print("抽出完了")
+
+
+def find_video_file(save_dir):
+    # 保存先フォルダにmp4かmkvファイルがあるか探す
+    video_list = pathlib.Path(save_dir)
+    video_list = list([p for p in video_list.glob("**/*")
+                            if re.search(".(mp4|mkv)", str(p))])
+    return video_list
 
 
 if __name__ == "__main__":
