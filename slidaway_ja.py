@@ -13,7 +13,7 @@ from PIL import Image
 from tqdm import tqdm
 
 
-def switch():
+def main():
     parser = argparse.ArgumentParser(description="Slidaway: Microsoft StreamとZoomのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール")
     
     parser.add_argument("--version", action="version", version="version 0.1.0", help="バージョンを表示します。")
@@ -211,4 +211,4 @@ def find_video_file(save_dir):
 
 
 if __name__ == "__main__":
-    switch()
+    main()
