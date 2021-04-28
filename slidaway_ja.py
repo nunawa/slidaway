@@ -121,7 +121,7 @@ def download_from_zoom(url_list, save_dir):
                 bar.update(len(chunk))
             bar.close()
 
-        print("ダウンロード完了")
+        print("ダウンロード完了: " + path)
 
 
 def frame_to_image(video_list, save_dir, interval, threshold):
@@ -199,8 +199,7 @@ def frame_to_image(video_list, save_dir, interval, threshold):
             prev_frame_hash = frame_hash
 
         cap.release()
-        #フルパス表示にする
-        print("抽出完了")
+        print("抽出完了: " + save_dir_modified)
 
 
 def find_video_file(save_dir):
