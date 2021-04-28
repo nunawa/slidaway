@@ -17,8 +17,9 @@ def switch():
     parser = argparse.ArgumentParser(description="Slidaway: Microsoft StreamとZoomのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール")
     
     parser.add_argument("--version", action="version", version="version 0.1.0", help="バージョンを表示します。")
-    parser.add_argument("-i", "--interval", type=int, help="スライドを抽出する際のサンプリング間隔を指定します。(単位: 秒, デフォルト: 3)")
-    parser.add_argument("-t", "--threshold", type=int, help="前フレームとの差がこの値より大きい場合、現フレームが保存されます。この値が負の場合、サンプリングされた全てのフレームが保存されます。(デフォルト: 5)")
+    parser.add_argument("-i", "--interval", default=3, type=int, help="スライドを抽出する際のサンプリング間隔を指定します。(単位: 秒, デフォルト: 3)")
+    parser.add_argument("-t", "--threshold", default=5, type=int, help="前フレームとの差がこの値より大きい場合、現フレームが保存されます。この値が負の場合、サンプリングされた全てのフレームが保存されます。(デフォルト: 5)")
+    parser.add_argument("-s", "--savedir", default="..", metavar="PATH", help="ファイルを保存するためのディレクトリを設定します。 (デフォルト: ..)")
     #parser.add_argument("--noclean", action="store_true", help="保存先に既に画像がある場合、それらを削除しないようにします。")
     
     group = parser.add_mutually_exclusive_group(required=True)
@@ -30,19 +31,19 @@ def switch():
 
     if args.download:
         print("\nモード: ダウンロード")
-        downloadVideo(args.download)
+        download_video(args.download, args.savedir)
     elif args.extract:
         print("\nモード: スライド抽出")
-        frameToImage(args.interval, args.threshold, args.extract)
+        frame_to_image(args.extract, args.savedir, args.interval, args.threshold)
     else:
         print("\nモード: デフォルト")
-        prev_list = findVideoFile()
-        downloadVideo(args.url)
-        list = findVideoFile()
+        prev_list = find_video_file(args.savedir)
+        download_video(args.url, args.savedir)
+        list = find_video_file(args.savedir)
         diff_list = set(list) - set(prev_list)
-        frameToImage(args.interval, args.threshold, diff_list)
+        frame_to_image(diff_list, args.savedir, args.interval, args.threshold)
 
-def downloadVideo(url_list):
+def download_video(url_list, save_dir):
     stream_url_list = []
     zoom_url_list = []
 
@@ -57,14 +58,14 @@ def downloadVideo(url_list):
         print("適切なURLが入力されませんでした")
         sys.exit(1)
     elif not stream_url_list:
-        downloadFromZoom(zoom_url_list)
+        download_from_zoom(zoom_url_list, save_dir)
     elif not zoom_url_list:
-        downloadFromStream(stream_url_list)
+        download_from_stream(stream_url_list, save_dir)
     else:
-        downloadFromStream(stream_url_list)
-        downloadFromZoom(zoom_url_list)
+        download_from_stream(stream_url_list, save_dir)
+        download_from_zoom(zoom_url_list, save_dir)
 
-def downloadFromStream(url_list):
+def download_from_stream(url_list, save_dir):
     print("\nStreamからのダウンロードを開始します\n")
 
     # urlのリストをtxtで保存
@@ -73,18 +74,18 @@ def downloadFromStream(url_list):
         f.write(url)
 
     # txt経由でURL読み込み destreamer使ってダウンロード
-    cmd = ["resources\\destreamer.exe", "-f", "url.txt", "-o", "..\\videos", "-t {title}", "-k"]
+    cmd = ["resources\\destreamer.exe", "-f", "url.txt", "-o", save_dir, "-t {title}", "-k"]
     proc = subprocess.run(cmd)
     if proc.returncode != 0:
         print("ダウンロードに失敗しました")
         sys.exit(1)
 
-def downloadFromZoom(url_list):
+def download_from_zoom(url_list, save_dir):
     print("\nZoomからのダウンロードを開始します")
 
     for url in url_list:
         # 動画保存ディレクトリの作成
-        os.makedirs("..\\videos", exist_ok=True)
+        #os.makedirs("..\\videos", exist_ok=True)
 
         # HTTPリクエストしてmp4のURLとCookieを取得
         r = requests.get(url)
@@ -96,12 +97,12 @@ def downloadFromZoom(url_list):
         filename = str(meeting_topic) + "_" + str(start_time).replace(" ", "_").replace(":", "").replace(",", "")
 
         # 同名ファイルがあったら改名
-        path = "..\\videos\\{}.mp4".format(filename)
+        path = save_dir + "\\{}.mp4".format(filename)
         uniq = 1
         while os.path.exists(path):
-            path = "..\\videos\\{}_{}.mp4".format(filename, uniq)
+            path = save_dir + "\\{}_{}.mp4".format(filename, uniq)
             uniq += 1
-        print("\nファイル名: " + path.replace("..\\videos\\", ""))
+        print("\nファイル名: " + path.replace(save_dir + "\\", ""))
 
         # ファイルサイズ取得のためヘッダだけリクエスト
         mp4_size = int(requests.head(mp4_url, cookies=cookie, headers={"referer": url}).headers["Content-Length"])
@@ -119,20 +120,14 @@ def downloadFromZoom(url_list):
 
         print("ダウンロード完了")
 
-def findVideoFile():
-    # videosフォルダにmp4かmkvファイルがあるか探す
-    video_list = pathlib.Path("..\\videos")
+def find_video_file(save_dir):
+    # 保存先フォルダにmp4かmkvファイルがあるか探す
+    video_list = pathlib.Path(save_dir)
     video_list = list([p for p in video_list.glob("**/*")
                             if re.search(".(mp4|mkv)", str(p))])
     return video_list
 
-def frameToImage(interval, threshold, video_list):
-    if not interval:
-        interval = 3
-
-    if not threshold:
-        threshold = 5
-
+def frame_to_image(video_list, save_dir, interval, threshold):
     path_video_list = []
     filename_list = []
 
@@ -151,10 +146,11 @@ def frameToImage(interval, threshold, video_list):
             sys.exit(1)
 
         # 画像保存ディレクトリの作成
-        os.makedirs("..\\pictures\\" + filename, exist_ok=True)
+        save_dir_modified = save_dir + "\\" + os.path.splitext(filename)[0]
+        os.makedirs(save_dir_modified, exist_ok=True)
 
         # フォルダ内に既に画像があった場合は消す
-        png_list = glob.glob("..\\pictures\\" + filename + "\\*.png")
+        png_list = glob.glob(save_dir_modified + "\\*.png")
         if png_list:
             for png in png_list:
                 os.remove(png)
@@ -175,7 +171,7 @@ def frameToImage(interval, threshold, video_list):
         # ハッシュ値を計算
         prev_frame_hash = imagehash.phash(prev_frame_pil)
         # PNG画像として書き出し
-        prev_frame_pil.save("..\\pictures\\{}\\{:0=7}.png".format(filename, 0))
+        prev_frame_pil.save(save_dir_modified + "\\{:0=7}.png".format(0))
 
         for i in tqdm(range(1, int(frame_count), int(step))):
             # 現在位置をi番目のフレームに移動
@@ -185,6 +181,9 @@ def frameToImage(interval, threshold, video_list):
                 print("cap is \'NoneType\'")
                 break
             ret, frame = cap.read()
+            # フレームが読み込めなかった時は飛ばす
+            if ret == False:
+                continue
             frame_pil = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame_pil = Image.fromarray(frame_pil)
             frame_hash = imagehash.phash(frame_pil)
@@ -194,12 +193,13 @@ def frameToImage(interval, threshold, video_list):
             if frame_distance > threshold:
                 # 現在のフレーム数を取得
                 num = cap.get(cv2.CAP_PROP_POS_FRAMES)
-                # cv2.imwriteでは日本語ファイルを保存できないので、numpyで保存
-                frame_pil.save("..\\pictures\\{}\\{:0=7}.png".format(filename, int(num)))
+                # cv2.imwriteでは日本語ファイルを保存できないので、NumPyで保存
+                frame_pil.save(save_dir_modified + "\\{:0=7}.png".format(int(num)))
 
             prev_frame_hash = frame_hash
 
         cap.release()
+        #フルパス表示にする
         print("抽出完了")
 
 
