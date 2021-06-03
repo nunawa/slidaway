@@ -1,12 +1,14 @@
+<a href="https://www.buymeacoffee.com/nunawa" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 # Slidaway
 
-Microsoft StreamとZoom Cloud Meetingのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール
+Microsoft StreamやZoomの動画からプレゼンテーションのスライドを抽出して保存するCLIツール
 
-# 使い方
+## 使い方
 
-```bash
-> slidaway-ja.exe -h
-usage: slidaway-ja.exe [-h] [--version] [-i INTERVAL] [-t THRESHOLD]
+```
+> slidaway.exe -h
+usage: slidaway.exe [-h] [--version] [-i INTERVAL] [-t THRESHOLD]
                       (-u URL [URL ...] | -d URL [URL ...] | -x)
 
 Slidaway: Microsoft StreamとZoom Cloud Meetingのビデオからプレゼンテーションのスライドを抽出して保存するCLIツール
@@ -29,30 +31,30 @@ optional arguments:
 ```
 
 基本的な使い方：
-```bash
-slidaway-ja.exe -u "http://example.com/"
+```
+slidaway.exe -u "http://example.com/"
 ```
 
 複数のURLを扱う：
-```bash
-slidaway-ja.exe -u "http://example.com/" "http://example.com/"
+```
+slidaway.exe -u "http://example.com/" "http://example.com/"
 ```
 
 サンプリング間隔と閾値を設定する：
-```bash
-slidaway-ja.exe -i 10 -t 8 -u "http://example.com/"
+```
+slidaway.exe -i 10 -t 8 -u "http://example.com/"
 ```
 
 ダウンロードのみ：
-```bash
-slidaway-ja.exe -d "http://example.com/"
+```
+slidaway.exe -d "http://example.com/"
 ```
 
 スライド抽出のみ：
-```bash
-slidaway-ja.exe -x
+```
+slidaway.exe -x
 ```
 
-# ライセンス
+## ライセンス
 
 Slidawayは、MITライセンスのもとで公開されています。

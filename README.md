@@ -1,12 +1,14 @@
+<a href="https://www.buymeacoffee.com/nunawa" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 # Slidaway
 
-CLI tool to extract and save presentation slides from Microsoft Stream and Zoom Cloud Meeting videos.
+CLI tool to extract and save presentation slides from Microsoft Stream and Zoom videos.
 
-# Usage
+## Usage
 
-```bash
+```
 > slidaway.exe -h
-usage: slidaway.py [-h] [--version] [-i INTERVAL] [-t THRESHOLD] (-u URL [URL ...] | -d URL [URL ...] | -x)
+usage: slidaway.exe [-h] [--version] [-i INTERVAL] [-t THRESHOLD] (-u URL [URL ...] | -d URL [URL ...] | -x)
 
 Slidaway: Extract and save presentation slides from Microsoft Stream or Zoom Cloud Meeting videos
 
@@ -28,30 +30,30 @@ optional arguments:
 ```
 
 Basic usage:
-```bash
+```
 slidaway.exe -u "http://example.com/"
 ```
 
 Handle multiple URLs:
-```bash
+```
 slidaway.exe -u "http://example.com/" "http://example.com/"
 ```
 
 Set sampling interval and threshold:
-```bash
+```
 slidaway.exe -i 10 -t 8 -u "http://example.com/"
 ```
 
 Download only:
-```bash
+```
 slidaway.exe -d "http://example.com/"
 ```
 
 Extraction only:
-```bash
+```
 slidaway.exe -x
 ```
 
-# License
+## License
 
 Slidaway is licensed under the MIT license.
